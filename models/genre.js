@@ -16,11 +16,9 @@ const Genre = mongoose.model('Genre', genresSchema)
 function validateGenre(genre) {
     const schema = Joi.object({
         name: Joi.string()
-            .alphanum()
-            .min(2)
-            .max(30)
+            .valid('SF', 'romantic', 'dramat', 'thiller')
             .required(),
-    })
+    });
     return schema.validate(genre);
 }
 

@@ -3,11 +3,11 @@ const router = express()
 const {Genre, validate} = require('../models/genre')
 const auth = require('../middleware/auth')
 const admin = require('../middleware/admin')
-const asyncMiddleware = require('../middleware/async')
-const winston = require("winston")
+const validateObjectId = require('../middleware/validateObjectId')
+const logger = require('../startup/logger')
 
 router.get('/', async (req, res) => {
-    winston.log('info', `Getting all genres - User: ${req.user ? req.user._id : 'Anonymous'}, URL: ${req.originalUrl}, IP: ${req.ip}`)
+    logger.log('info', `Getting all genres - User: ${req.user ? req.user._id : 'Anonymous'}, URL: ${req.originalUrl}, IP: ${req.ip}`)
     return res.send(await Genre.find().sort('name'))
 })
 
@@ -45,7 +45,7 @@ router.delete('/:id', [auth,admin], async (req, res) => {
     res.send(genre)
 })
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateObjectId ,async (req, res) => {
     const genre = await Genre.findById(req.params.id)
     if (!genre) return res.status(404).send("Genre with given id not found")
     res.send(genre)
