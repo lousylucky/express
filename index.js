@@ -10,5 +10,5 @@ require('./startup/config')()
 require('./startup/routes')(app)
 require('./startup/mongodb')()
 
-app.listen(3000, () => logger.info("Lisiting on port 3000"))
-
+const server = app.listen(3000, () => logger.info("Lisiting on port 3000"))
+module.exports = server
