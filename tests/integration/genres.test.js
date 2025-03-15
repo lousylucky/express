@@ -1,12 +1,13 @@
 const request = require('supertest')
 const {Genre} = require('../../models/genre')
 const {User} = require('../../models/user')
+const { default: mongoose } = require('mongoose')
 let server 
 
 describe('/api/genres', () => {
     beforeEach(()=> { server = require('../../index')})
     afterEach( async ()  => { 
-        server.close()
+        await server.close()
         await Genre.deleteMany({})
     })
     describe('GET', () => {
@@ -34,6 +35,11 @@ describe('/api/genres', () => {
         }),
         it('should return 404 if invalid id is passed', async () => {
             const res = await request(server).get('/api/genres/' + '10')
+            expect(res.status).toBe(404)
+        }),
+        it('should return 404 if valid id passed but no genre found', async () => {
+            const id = new mongoose.Types.ObjectId()
+            const res = await request(server).get('/api/genres/' + id)
             expect(res.status).toBe(404)
         })
     })
@@ -79,6 +85,106 @@ describe('/api/genres', () => {
 
             expect(res.body).toHaveProperty('_id')
             expect(res.body).toHaveProperty('name','SF')
+        })
+    })
+
+    describe('PUT /:id', () => {
+
+        // define the happy path
+        let token
+        let name
+        const exec = async () => {
+            return await request(server)
+                .put('/api/genres/' + id)
+                .set('x-auth-token', token)
+                .send({name: name})
+        }
+        beforeEach(()=> {
+            token = new User().generateAuthToken()
+            name = 'SF'
+            id = new mongoose.Types.ObjectId()
+        })
+        afterEach( async ()  => { 
+            await server.close()
+            await Genre.deleteMany({})
+        })
+
+        it('should return 401 if client is not log-in', async () => {
+            token = ''
+            const res = await exec()
+            expect(res.status).toBe(401)
+        }),        
+        it('should return 400 if genre if unknow enum', async () => {
+            name = 'ABC'
+
+            const res = await exec()
+
+            expect(res.status).toBe(400)
+        }),
+        it('should genre when valid Id given', async () => { 
+            const genre = await new Genre(
+                {name:'SF'},
+            )
+            id = genre._id
+            await genre.save()
+
+            const res = await exec()
+
+            expect(res.status).toBe(200)
+        })
+        it('should return 404 when genre not found', async () => { 
+            
+            const res = await exec()
+            expect(res.status).toBe(404)
+        })
+    })
+
+    describe('DELETE /:id', () => {
+
+        // define the happy path
+        let token
+        let name
+        const exec = async () => {
+            return await request(server)
+                .delete('/api/genres/' + id)
+                .set('x-auth-token', token)
+                .send({name: name})
+        }
+        beforeEach(()=> {
+            token = new User({isAdmin: true}).generateAuthToken()
+            name = 'SF'
+            id = new mongoose.Types.ObjectId()
+        })
+        afterEach( async ()  => { 
+            await server.close()
+            await Genre.deleteMany({})
+        })
+
+        it('should return 404 when no genre found', async () => {
+            const res = await exec()
+            expect(res.status).toBe(404)
+        }),   
+        it('should return 403 when user has no admin rights', async () => {
+            token = new User().generateAuthToken()
+
+            const res = await exec()
+            expect(res.status).toBe(403)
+        }),  
+        it('should return 401 if client is not log-in', async () => {
+            token = ''
+            const res = await exec()
+            expect(res.status).toBe(401)
+        }),        
+        it('should return 200 if genre deleted', async () => {
+            const genre = await new Genre(
+                {name:'SF'},
+            )
+            id = genre._id
+            await genre.save()
+
+            const res = await exec()
+
+            expect(res.status).toBe(200)
         })
     })
 
