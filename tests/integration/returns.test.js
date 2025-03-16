@@ -1,5 +1,6 @@
 const { Rent } = require('../../models/rent')
 const { User } = require('../../models/user')
+const { Movie } = require('../../models/movie')
 const mongoose = require('mongoose')
 const request = require('supertest')
 const moment = require('moment')
@@ -10,6 +11,8 @@ describe('/api/returns', () => {
     let movieId
     let rent
     let token
+    let movie 
+    
 
     const exec = async () => {
         return await request(server)
@@ -24,26 +27,33 @@ describe('/api/returns', () => {
         movieId = new mongoose.Types.ObjectId()
         token = new User().generateAuthToken()
 
-        rent = new Rent({
+        movieContent = {
+            _id: movieId,
+            title: '12345',
+            dailyRentalRate: 2,
+            genre: { name: 'SF' },
+            numberInStock: 10
+        }
+        
+        movie = new Movie(movieContent)
 
+        rent = new Rent({
             customer: {
                 _id: customerId,
                 name: '12345',
                 phone: '12345'
             },
-            movie: {
-                _id: movieId,
-                title: '12345',
-                dailyRentalRate: 2
-            }
+            movie: movieContent
         })
         await rent.save()
+        await movie.save()
     })
 
 
     afterEach(async () => {
         await server.close()
         await Rent.deleteMany({})
+        await Movie.deleteMany({})
     })
 
     it('should return 401 if clinet is not log in', async () => {
@@ -88,5 +98,17 @@ describe('/api/returns', () => {
             await exec()
             const rentInDb = await Rent.findById(rent._id)
             expect(rentInDb.rentalFee).toBe(14)
+        }),
+        it('should increase the stock if valid input ', async () => {
+            await exec()
+            const movieInDb = await Movie.findById(movieId)
+            expect(movieInDb.numberInStock).toBe(movie.numberInStock + 1)
+
+        }),
+        it('should return the rent in the body ', async () => {
+            const res = await exec()
+            expect(Object.keys(res.body)).toEqual(
+                expect.arrayContaining(['dateOut', 'dateReturned', 'rentalFee', 'customer', 'movie'])
+            )
         })
 })

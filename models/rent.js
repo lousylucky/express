@@ -1,7 +1,7 @@
 const Joi = require('joi')
 const mongoose = require('mongoose')
-const { moviesSchema } = require('./movie')
 const { customersSchema } = require('./customer')
+const { Movie } = require('./movie')
 
 // Define Schema
 const rentSchema = new mongoose.Schema({
@@ -11,7 +11,7 @@ const rentSchema = new mongoose.Schema({
     },
     numberInStock: Number,
     dailyRentalRate: Number,
-    movie:   new mongoose.Schema({
+    movie: new mongoose.Schema({
         title: {
             type: String,
             trim: true,
@@ -36,6 +36,22 @@ const rentSchema = new mongoose.Schema({
     }
 
 })
+
+rentSchema.statics.lookup = function (customerId, movieId) {
+    return this.findOne({
+        'customer._id': customerId,
+        'movie._id': movieId
+    });
+}
+
+rentSchema.methods.processRent = async function () {
+    this.dateReturned = new Date()
+    this.rentalFee = Math.floor((this.dateReturned - this.dateOut) / (1000 * 60 * 60 * 24)) * this.movie.dailyRentalRate
+    await Movie.updateOne({ _id: this.movie._id }, {
+        $inc: { numberInStock: 1 }
+    })
+    await this.save()
+}
 
 function validateRent(rent) {
     const schema = Joi.object({
