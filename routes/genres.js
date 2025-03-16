@@ -4,6 +4,7 @@ const {Genre, validate} = require('../models/genre')
 const auth = require('../middleware/auth')
 const admin = require('../middleware/admin')
 const validateObjectId = require('../middleware/validateObjectId')
+const validator = require('../middleware/validator')
 const logger = require('../startup/logger')
 
 router.get('/', async (req, res) => {
@@ -11,10 +12,7 @@ router.get('/', async (req, res) => {
     return res.send(await Genre.find().sort('name'))
 })
 
-router.post('/', auth, async (req, res) => {     
-
-    const { error } = validate(req.body)
-    if (error) return res.status(400).send(error.message)
+router.post('/', [auth, validator(validate)], async (req, res) => {     
 
     const genre = new Genre({ name: req.body.name })
 
@@ -27,19 +25,15 @@ router.post('/', auth, async (req, res) => {
 
 })
 
-router.put('/:id', auth, async (req, res) => {
-
-    const { error } = validate(req.body)
-    if (error) return res.status(400).send(error)
+router.put('/:id', [auth, validator(validate)], async (req, res) => {
 
     const genre = await Genre.findByIdAndUpdate(req.params.id, { name: req.body.name })
     if (!genre) return res.status(404).send("Genre with given id not found")
     res.send("Success")
-
 })
 
 
-router.delete('/:id', [auth,admin], async (req, res) => {
+router.delete('/:id', [auth,admin, validateObjectId], async (req, res) => {
     const genre = await Genre.findByIdAndDelete(req.params.id)
     if (!genre) return res.status(404).send("Genre with given id not found")
     res.send(genre)

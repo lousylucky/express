@@ -62,21 +62,16 @@ describe('/api/genres', () => {
 
         it('should return 401 if client is not log-in', async () => {
             token = ''
-
             const res = await exec()
-
             expect(res.status).toBe(401)
         }),
         it('should return 400 if genre if unknow enum', async () => {
             name = 'ABC'
-
             const res = await exec()
-
             expect(res.status).toBe(400)
         }),
         it('should save the genre if is valid', async () => {
             await exec()
-
             const genre = Genre.find({name: 'SF'})
             expect(genre).not.toBeNull()
         }),
@@ -163,7 +158,12 @@ describe('/api/genres', () => {
         it('should return 404 when no genre found', async () => {
             const res = await exec()
             expect(res.status).toBe(404)
-        }),   
+        }), 
+        it('should return 404 if invalid ObjectId provided', async () => {
+            id = '1'
+            const res = await exec()
+            expect(res.status).toBe(404)
+        }),    
         it('should return 403 when user has no admin rights', async () => {
             token = new User().generateAuthToken()
 
@@ -176,9 +176,7 @@ describe('/api/genres', () => {
             expect(res.status).toBe(401)
         }),        
         it('should return 200 if genre deleted', async () => {
-            const genre = await new Genre(
-                {name:'SF'},
-            )
+            const genre = new Genre({name:'SF'})
             id = genre._id
             await genre.save()
 
