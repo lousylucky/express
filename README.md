@@ -2,6 +2,7 @@
 # 🎬 Movie Rental API
 
 This is a Node.js RESTful API for a fictional movie rental service called **Vidly**, using Express and MongoDB. It supports user registration, authentication, movie rentals, and returns.
+The database is empty, but the entire API is well documented. In the end, you can create everything, starting from users and customers, through movies and genres, and ending with rentals and returns.
 
 ##  Project Structure
 .
