@@ -2,7 +2,7 @@ const auth = require('../middleware/auth')
 const mongoose = require('mongoose')
 const express = require('express')
 const router = express()
-const { User, validate } = require('../models/user')
+const { User, validate, validateUpdate } = require('../models/user')
 const _ = require('lodash')
 const bcrypt = require('bcrypt');
 
@@ -36,21 +36,25 @@ router.post('/', async (req, res) => {
     }
 })
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
 
-    const { error } = validate(req.body)
+    const { error } = validateUpdate(req.body)
     if (error) return res.status(400).send(error)
 
-    const rent = await Rent.findByIdAndUpdate(req.params.id, { name: req.body.name })
-    if (!rent) return res.status(404).send("rent with given id not found")
+    const result = await User.findByIdAndUpdate(req.params.id, {
+        name: req.body.name,
+        email: req.body.email,
+    })
+
+    if (!result) return res.status(404).send("user with given id not found")
     res.send("Success")
 
 })
 
-router.delete('/', async (req, res) => {
-    const rent = await Rent.findByIdAndDelete(req.params.id)
-    if (!rent) return res.status(404).send("rent with given id not found")
-    res.send(rent)
+router.delete('/:id', auth, async (req, res) => {
+    const user = await User.findByIdAndDelete(req.params.id).select('-password')
+    if (!user) return res.status(404).send("user with given id not found")
+    res.send(user)
 })
 
 

@@ -2,7 +2,7 @@ const Joi = require('joi')
 const mongoose = require('mongoose')
 const { customersSchema } = require('./customer')
 const jwt = require('jsonwebtoken')
-const config = require('config')    
+const config = require('config')
 // instresting to install join password complexity
 // npm i joi-password-complexity
 
@@ -33,8 +33,8 @@ const userSchema = new mongoose.Schema({
     }
 })
 
-userSchema.methods.generateAuthToken = function() {
-    const token = jwt.sign({_id: this._id, isAdmin: this.isAdmin}, config.get('jwtPrivateKey'))
+userSchema.methods.generateAuthToken = function () {
+    const token = jwt.sign({ _id: this._id, isAdmin: this.isAdmin }, config.get('jwtPrivateKey'))
     return token
 }
 
@@ -42,7 +42,14 @@ function validateUser(user) {
     const schema = Joi.object({
         name: Joi.string().min(3).max(30).required(),
         email: Joi.string().min(3).max(255).required().email(),
-        password: Joi.string().min(3).max(1024).required() 
+        password: Joi.string().min(3).max(1024).required()
+    })
+    return schema.validate(user);
+}
+function validateUserUpdate(user) {
+    const schema = Joi.object({
+        name: Joi.string().min(3).max(30).required(),
+        email: Joi.string().min(3).max(255).required().email(),
     })
     return schema.validate(user);
 }
@@ -52,3 +59,4 @@ const User = mongoose.model('User', userSchema)
 
 module.exports.User = User
 module.exports.validate = validateUser
+module.exports.validateUpdate = validateUserUpdate
