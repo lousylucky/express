@@ -7,7 +7,9 @@ const _ = require('lodash')
 const bcrypt = require('bcrypt');
 
 router.get('/me', auth, async (req, res) => {
+    if (!req.user._id) return res.status(400).send("You need to provided id")
     const user = await User.findById(req.user._id).select('-password')
+    if (!user) return res.status(404).send("Could not found user")
     res.send(user)
 })
 
