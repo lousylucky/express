@@ -5,16 +5,18 @@ const { Rent, validate } = require('../models/rent')
 const { Customer, } = require('../models/customer')
 const { Movie } = require('../models/movie')
 const Fawn = require('fawn')
+const auth = require('../middleware/auth')
 
 
-router.get('/', async (req, res) => {
+
+router.get('/', auth, async (req, res) => {
     return res.send(await Rent.find().sort('-dateOut'))
 })
 
 Fawn.init('mongodb://localhost/vindly')
 
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     const { error } = validate(req.body)
     if (error) return res.status(400).send(error.message)
 
@@ -43,7 +45,7 @@ router.post('/', async (req, res) => {
         rent.save()
         movie.numberInStock--
         movie.save()
-    
+
         res.send(rent);
     } catch (error) {
         res.status(500).send(error.message);
@@ -51,25 +53,14 @@ router.post('/', async (req, res) => {
 
 })
 
-router.put('/:id', async (req, res) => {
 
-    const { error } = validate(req.body)
-    if (error) return res.status(400).send(error)
-
-    const rent = await Rent.findByIdAndUpdate(req.params.id, { name: req.body.name })
-    if (!rent) return res.status(404).send("rent with given id not found")
-    res.send("Success")
-
-})
-
-
-router.delete('/', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
     const rent = await Rent.findByIdAndDelete(req.params.id)
     if (!rent) return res.status(404).send("rent with given id not found")
     res.send(rent)
 })
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
     const rent = await Rent.findById(req.params.id)
     if (!rent) return res.status(404).send("rent with given id not found")
     res.send(rent)
